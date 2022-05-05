@@ -11,8 +11,10 @@ import { handlePropagation, downloadFile } from "../../methods/assistFunctions";
 import ToolButton from "../../components/ToolButton";
 import MindmapTitle from "../../components/MindmapTitle";
 import Popup from "../../components/Popup";
-
+import { debounce } from "../../methods/assistFunctions";
 const Nav = () => {
+  const zoomHook = useZoom();
+  const moveHook = useMove();
   const [popup, setPopup] = useState(popupType.NONE);
   const {
     mindmap: { state: mindmap },
@@ -26,6 +28,69 @@ const Nav = () => {
   const { zoomIn, zoomOut, zoomReset } = useZoom();
   const { moveXY, moveReset } = useMove();
   const { undoHistory, redoHistory } = useHistory();
+  const [popupOver, setPopupOver] = useState(false);
+  const [navOver, setNavOver] = useState(false);
+  var mouseDown = false;
+  var prevX = 0;
+  var prevY = 0;
+  const handleMouseDown = (e) => {
+    // 0 =left 1=middile 2=right
+    e.stopPropagation();
+    if (e.button === 1 || (e.altKey && e.button === 0)) {
+      mouseDown = true;
+    }
+  };
+  const handleMouseUp = (e) => {
+    e.stopPropagation();
+    if (e.button === 1 || e.button === 0) {
+      mouseDown = false;
+      prevX = 0;
+      prevY = 0;
+    }
+  };
+  const handleMouseMove = (e) => {
+    if (mouseDown && !(popupOver || navOver)) {
+      const normalizeXY = window.innerWidth / window.innerHeight;
+      let moveXAmount = 0;
+      let moveYAmount = 0;
+      if (prevX > 0 || prevY > 0) {
+        moveXAmount += e.pageX - prevX;
+        moveYAmount += e.pageY - prevY;
+      }
+      prevX = e.pageX;
+      prevY = e.pageY;
+      moveHook.moveXY(moveXAmount / 10 / normalizeXY, moveYAmount / 10);
+    }
+  };
+  const getWheelDelta = (e) => {
+    if (e.wheelDelta) {
+      return e.wheelDelta;
+    } else {
+      return -e.wheelDelta * 40;
+    }
+  };
+  const handleScroll = (e) => {
+    if (e.wheelDelta && !popupOver && !navOver) {
+      e.stopPropagation();
+      getWheelDelta(e) > 0
+        ? zoomHook.zoomIn(e.clientX, e.clientY)
+        : zoomHook.zoomOut(e.clientX, e.clientY);
+      return;
+    }
+  };
+  useEffect(() => {
+    let element = window; //document.getElementById(refer.MINDMAP_MAIN);
+    element.addEventListener("mousemove", handleMouseMove);
+    element.addEventListener("mousedown", handleMouseDown);
+    element.addEventListener("mouseup", handleMouseUp);
+    element.addEventListener("wheel", handleScroll);
+    return () => {
+      element.removeEventListener("mousemove", handleMouseMove);
+      element.removeEventListener("mousedown", handleMouseDown);
+      element.removeEventListener("mouseup", handleMouseUp);
+      element.removeEventListener("wheel", handleScroll);
+    };
+  }, [popupOver, navOver]);
 
   useEffect(() => {
     const handleShotcut = (event) => {
@@ -119,80 +184,93 @@ const Nav = () => {
         moveReset();
     }
   };
-
+  // console.log("nav:" + navOver + "popup" + popupOver);
   return (
     <nav className={wrapper}>
-      <section className={section} onClick={handlePropagation}>
-        <ToolButton icon={"add-item-alt"} onClick={handleNewFile}>
-          New
-        </ToolButton>
-        <ToolButton icon={"folder-open"} onClick={handleOpenFile}>
-          Open
-        </ToolButton>
-        <ToolButton icon={"duplicate"} onClick={handleExport}>
-          Export
-        </ToolButton>
-        <ToolButton icon={"palette"} onClick={handleTheme}>
-          Theme
-        </ToolButton>
-        <ToolButton icon={"plus-circle"} onClick={() => handleZoom("in")}>
-          in
-        </ToolButton>
-        <ToolButton icon={"minus-circle"} onClick={() => handleZoom("out")}>
-          out
-        </ToolButton>
-        <ToolButton icon={"rotate-left"} onClick={() => handleZoom()}>
-          Reset Zoom
-        </ToolButton>
-        <ToolButton icon={"search"} onClick={() => handleSearch()}>
-          Search
-        </ToolButton>
-      </section>
-      <section className={section}>
-        <MindmapTitle />
-      </section>
-      <section className={section} onClick={handlePropagation}>
-        <ToolButton icon={"rotate-left"} onClick={() => handleMove()}>
-          Reset Move
-        </ToolButton>
-        <ToolButton icon={"arrow-left"} onClick={() => handleMove("left")}>
-          Left
-        </ToolButton>
-        <ToolButton icon={"arrow-up"} onClick={() => handleMove("up")}>
-          Up
-        </ToolButton>
-        <ToolButton icon={"arrow-down"} onClick={() => handleMove("down")}>
-          Down
-        </ToolButton>
-        <ToolButton icon={"arrow-right"} onClick={() => handleMove("right")}>
-          Right
-        </ToolButton>
-        <ToolButton
-          icon={"undo"}
-          disabled={history.undo.length === 0}
-          onClick={handleUndo}
-        >
-          Undo
-        </ToolButton>
-        <ToolButton
-          icon={"redo"}
-          disabled={history.redo.length === 0}
-          onClick={handleRedo}
-        >
-          Redo
-        </ToolButton>
-        <ToolButton icon={"scale"} onClick={handleExpand}>
-          Expand
-        </ToolButton>
-      </section>
+      <div
+        className={wrapper}
+        onMouseOver={() => {
+          setNavOver(true);
+        }}
+        onMouseLeave={() => {
+          setNavOver(false);
+        }}
+      >
+        <section className={section} onClick={handlePropagation}>
+          <ToolButton icon={"add-item-alt"} onClick={handleNewFile}>
+            New
+          </ToolButton>
+          <ToolButton icon={"folder-open"} onClick={handleOpenFile}>
+            Open
+          </ToolButton>
+          <ToolButton icon={"duplicate"} onClick={handleExport}>
+            Export
+          </ToolButton>
+          <ToolButton icon={"palette"} onClick={handleTheme}>
+            Theme
+          </ToolButton>
+          <ToolButton icon={"plus-circle"} onClick={() => handleZoom("in")}>
+            in
+          </ToolButton>
+          <ToolButton icon={"minus-circle"} onClick={() => handleZoom("out")}>
+            out
+          </ToolButton>
+          <ToolButton icon={"rotate-left"} onClick={() => handleZoom()}>
+            Reset Zoom
+          </ToolButton>
+          <ToolButton icon={"search"} onClick={() => handleSearch()}>
+            Search
+          </ToolButton>
+        </section>
+        <section className={section}>
+          <MindmapTitle />
+        </section>
+        <section className={section} onClick={handlePropagation}>
+          <ToolButton icon={"rotate-left"} onClick={() => handleMove()}>
+            Reset Move
+          </ToolButton>
+          <ToolButton icon={"arrow-left"} onClick={() => handleMove("left")}>
+            Left
+          </ToolButton>
+          <ToolButton icon={"arrow-up"} onClick={() => handleMove("up")}>
+            Up
+          </ToolButton>
+          <ToolButton icon={"arrow-down"} onClick={() => handleMove("down")}>
+            Down
+          </ToolButton>
+          <ToolButton icon={"arrow-right"} onClick={() => handleMove("right")}>
+            Right
+          </ToolButton>
+          <ToolButton
+            icon={"undo"}
+            disabled={history.undo.length === 0}
+            onClick={handleUndo}
+          >
+            Undo
+          </ToolButton>
+          <ToolButton
+            icon={"redo"}
+            disabled={history.redo.length === 0}
+            onClick={handleRedo}
+          >
+            Redo
+          </ToolButton>
+          <ToolButton icon={"scale"} onClick={handleExpand}>
+            Expand
+          </ToolButton>
+        </section>
+      </div>
       {popup !== popupType.NONE && (
-        <Popup
-          displayMan={displayMan}
-          setDisplayMan={setDisplayMan}
-          type={popup}
-          handleClosePopup={handleClosePopup}
-          handleDownload={handleDownload}
-        />
+        <div>
+          <Popup
+            displayMan={displayMan}
+            setPopupOver={setPopupOver}
+            setDisplayMan={setDisplayMan}
+            type={popup}
+            handleClosePopup={handleClosePopup}
+            handleDownload={handleDownload}
+          />
+        </div>
       )}
     </nav>
   );

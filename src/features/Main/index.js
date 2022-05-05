@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import { css } from "emotion";
 import Mindmap from "../Mindmap";
 import EditPanel from "../EditPanel";

@@ -9,9 +9,6 @@ import getKeydownEvent from "../../methods/getKeydownEvent";
 import RootNode from "../../components/RootNode";
 import DragCanvas from "../../components/DragCanvas";
 import LineCanvas from "../../components/LineCanvas";
-import useZoom from "../../customHooks/useZoom";
-import useMove from "../../customHooks/useMove";
-import { debounce } from "../../methods/assistFunctions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowsUpDownLeftRight,
@@ -31,8 +28,7 @@ const Mindmap = ({ container_ref }) => {
   const [eye, setEye] = useState(true);
   const historyHook = useHistory();
   const mindmapHook = useMindmap();
-  const zoomHook = useZoom();
-  const moveHook = useMove();
+
   const { clearNodeStatus } = mindmapHook;
   const [FLAG, setFLAG] = useState(0);
 
@@ -41,68 +37,6 @@ const Mindmap = ({ container_ref }) => {
   const handleResize = () => {
     setFLAG(Date.now());
   };
-  //move canvas freely
-  var mouseDown = false;
-  var prevX = 0;
-  var prevY = 0;
-  const handleMouseDown = (e) => {
-    // 0 =left 1=middile 2=right
-    if (e.button === 1 || (e.altKey && e.button === 0)) {
-      mouseDown = true;
-    }
-  };
-  const handleMouseUp = (e) => {
-    if (e.button === 1 || e.button === 0) {
-      mouseDown = false;
-      prevX = 0;
-      prevY = 0;
-    }
-  };
-  const handleMouseMove = (e) => {
-    if (mouseDown) {
-      const normalizeXY =
-        container_ref.current.clientWidth / container_ref.current.clientHeight;
-      let moveXAmount = 0;
-      let moveYAmount = 0;
-      if (prevX > 0 || prevY > 0) {
-        moveXAmount += e.pageX - prevX;
-        moveYAmount += e.pageY - prevY;
-      }
-      prevX = e.pageX;
-      prevY = e.pageY;
-      moveHook.moveXY(moveXAmount / 10 / normalizeXY, moveYAmount / 10);
-    }
-  };
-  const getWheelDelta = (e) => {
-    if (e.wheelDelta) {
-      return e.wheelDelta;
-    } else {
-      return -e.wheelDelta * 40;
-    }
-  };
-  const handleScroll = (e) => {
-    if (e.wheelDelta) {
-      e.preventDefault();
-      e.stopPropagation();
-      getWheelDelta(e) > 0
-        ? zoomHook.zoomIn(e.clientX, e.clientY)
-        : zoomHook.zoomOut(e.clientX, e.clientY);
-      return;
-    }
-  };
-  useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mouseup", debounce(handleMouseUp, 4));
-    window.addEventListener("wheel", handleScroll);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mouseup", debounce(handleMouseUp, 4));
-      window.removeEventListener("wheel", handleScroll);
-    };
-  }, [FLAG]);
-
   useEffect(() => {
     const handleKeydown = getKeydownEvent(nodeStatus, mindmapHook, historyHook);
     window.addEventListener("keydown", handleKeydown);

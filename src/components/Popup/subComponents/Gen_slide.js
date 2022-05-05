@@ -75,7 +75,7 @@ const gen_powerpoint = (content) => {
               titleText
             );
             nxtSlide = nxtSlide.addSlide();
-          } else if (count_bullet % 8 == 0) {
+          } else if (count_bullet % 8 === 0) {
             contentText =
               contentText +
               (contentText !== "" ? "\n" : "") +

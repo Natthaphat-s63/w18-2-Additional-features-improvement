@@ -30,11 +30,19 @@ const Popup = ({
   handleDownload,
   displayMan,
   setDisplayMan,
+  setPopupOver,
 }) => {
   const Content = getContentComponent(type);
   return (
     <div className={wrapper} onClick={handlePropagation}>
       <div
+        onMouseOver={() => {
+          setPopupOver(true);
+        }}
+        onMouseLeave={() => {
+          setPopupOver(false);
+        }}
+        id={"popup"}
         className={content_wrapper}
         style={
           type === popupType.SEARCH || (displayMan && type === popupType.EXPORT)
