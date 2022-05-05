@@ -6,13 +6,12 @@ import { setHistory } from "../../context/reducer/history/actionCreator";
 import useMindmap from "../../customHooks/useMindmap";
 import useHistory from "../../customHooks/useHistory";
 import getKeydownEvent from "../../methods/getKeydownEvent";
-import getMouseWheelEvent from "../../methods/getMouseWheelEvent";
 import RootNode from "../../components/RootNode";
 import DragCanvas from "../../components/DragCanvas";
 import LineCanvas from "../../components/LineCanvas";
 import useZoom from "../../customHooks/useZoom";
 import useMove from "../../customHooks/useMove";
-// import { debounce } from "../../methods/assistFunctions";
+import { debounce } from "../../methods/assistFunctions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowsUpDownLeftRight,
@@ -60,9 +59,9 @@ const Mindmap = ({ container_ref }) => {
     }
   };
   const handleMouseMove = (e) => {
-    const normalizeXY =
-      container_ref.current.clientWidth / container_ref.current.clientHeight;
     if (mouseDown) {
+      const normalizeXY =
+        container_ref.current.clientWidth / container_ref.current.clientHeight;
       let moveXAmount = 0;
       let moveYAmount = 0;
       if (prevX > 0 || prevY > 0) {
@@ -74,16 +73,35 @@ const Mindmap = ({ container_ref }) => {
       moveHook.moveXY(moveXAmount / 10 / normalizeXY, moveYAmount / 10);
     }
   };
+  const getWheelDelta = (e) => {
+    if (e.wheelDelta) {
+      return e.wheelDelta;
+    } else {
+      return -e.wheelDelta * 40;
+    }
+  };
+  const handleScroll = (e) => {
+    if (e.wheelDelta) {
+      e.preventDefault();
+      e.stopPropagation();
+      getWheelDelta(e) > 0
+        ? zoomHook.zoomIn(e.clientX, e.clientY)
+        : zoomHook.zoomOut(e.clientX, e.clientY);
+      return;
+    }
+  };
   useEffect(() => {
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("mouseup", debounce(handleMouseUp, 4));
+    window.addEventListener("wheel", handleScroll);
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mouseup", debounce(handleMouseUp, 4));
+      window.removeEventListener("wheel", handleScroll);
     };
-  }, []);
+  }, [FLAG]);
 
   useEffect(() => {
     const handleKeydown = getKeydownEvent(nodeStatus, mindmapHook, historyHook);
@@ -106,36 +124,6 @@ const Mindmap = ({ container_ref }) => {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
-
-  useEffect(() => {
-    const handleMouseWheel = getMouseWheelEvent(zoomHook, gState.zoom);
-    // const handleMapMove = getMouseWheelEvent(
-    //   moveHook,
-    //   gState.zoom,
-    //   normalizeXY
-    // );
-    document
-      .querySelector(`#${refer.MINDMAP_MAIN}`)
-      .addEventListener("wheel", handleMouseWheel);
-    // document
-    //   .querySelector(`#${refer.MINDMAP_MAIN}`)
-    //   .addEventListener("mousemove", debounce(handleMapMove, 4));
-    // document
-    //   .querySelector(`#${refer.MINDMAP_MAIN}`)
-    //   .addEventListener("mousedown", handleMapMove);
-    return () => {
-      document
-        .querySelector(`#${refer.MINDMAP_MAIN}`)
-        .removeEventListener("wheel", handleMouseWheel);
-      // document
-      //   .querySelector(`#${refer.MINDMAP_MAIN}`)
-      //   .removeEventListener("mousemove", debounce(handleMapMove, 4));
-      // document
-      //   .querySelector(`#${refer.MINDMAP_MAIN}`)
-      //   .removeEventListener("mousedown", handleMapMove);
-    };
-  }, [FLAG]);
-
   useEffect(() => {
     localStorage.setItem("mindmap", mindmap_json);
     hDispatch(
@@ -185,7 +173,7 @@ const Mindmap = ({ container_ref }) => {
             fontSize: "20px",
           }}
         >
-          Ctrl + Scroll to zoom
+          Scroll wheel to zoom
           <FontAwesomeIcon
             icon={faMagnifyingGlassPlus}
             style={{

@@ -129,9 +129,6 @@ const Nav = () => {
         <ToolButton icon={"folder-open"} onClick={handleOpenFile}>
           Open
         </ToolButton>
-        {/* <ToolButton icon={"file-download"} onClick={handleDownload}>
-          Download
-        </ToolButton> */}
         <ToolButton icon={"duplicate"} onClick={handleExport}>
           Export
         </ToolButton>

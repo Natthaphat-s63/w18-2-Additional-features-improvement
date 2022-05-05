@@ -23,21 +23,21 @@ export default (propHook, zoomRate, normalizeXY) => {
       return;
     }
 
-    // if ((e.buttons === 1 || e.buttons === 4) && e.type === "mousedown") {
-    //   mousemoveInfo.startX = e.clientX;
-    //   mousemoveInfo.startY = e.clientY;
-    //   return;
-    // }
+    if ((e.buttons === 1 || e.buttons === 4) && e.type === "mousedown") {
+      mousemoveInfo.startX = e.clientX;
+      mousemoveInfo.startY = e.clientY;
+      return;
+    }
 
-    // if ((e.altKey && e.buttons === 1) || e.buttons === 4) {
-    //   e.stopPropagation();
-    //   const { startX, startY } = mousemoveInfo;
-    //   const movedX = e.clientX - startX;
-    //   const movedY = e.clientY - startY;
-    //   moveXY(movedX / 10 / normalizeXY, movedY / 10);
-    //   mousemoveInfo.startX = e.clientX;
-    //   mousemoveInfo.startY = e.clientY;
-    // }
+    if ((e.altKey && e.buttons === 1) || e.buttons === 4) {
+      e.stopPropagation();
+      const { startX, startY } = mousemoveInfo;
+      const movedX = e.clientX - startX;
+      const movedY = e.clientY - startY;
+      moveXY(movedX / 10 / normalizeXY, movedY / 10);
+      mousemoveInfo.startX = e.clientX;
+      mousemoveInfo.startY = e.clientY;
+    }
   };
 
   return (event) => {
