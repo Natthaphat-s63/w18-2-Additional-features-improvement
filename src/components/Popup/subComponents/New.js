@@ -19,6 +19,7 @@ const New = ({ handleClosePopup, handleDownload }) => {
   const { setMindmap } = useMindmap();
 
   const handleNewFile = () => {
+    localStorage.removeItem("manualExport");
     setMindmap(defaultMindmap, true);
     dispatch(setTitle(refer.DEFAULT_TITLE));
     handleClosePopup();

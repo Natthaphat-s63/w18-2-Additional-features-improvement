@@ -47,7 +47,17 @@ const refreshSearchList = (keyword, mindmap) => {
 
   return searchList;
 };
-
+function areEqual(array1, array2) {
+  if (array1.length === array2.length) {
+    return array1.every((element, index) => {
+      if (element === array2[index]) {
+        return true;
+      }
+      return false;
+    });
+  }
+  return false;
+}
 const ManualExport = ({ handleClosePopup }) => {
   const {
     mindmap: { state: mindmap },
@@ -62,18 +72,45 @@ const ManualExport = ({ handleClosePopup }) => {
   const [disableState, setDisableState] = useState();
   useEffect(() => {
     clearNodeStatus();
+    if (mindmap.check && mindmap.dis && mindmap.idlist) {
+      let obj = {
+        check: mindmap.check,
+        dis: mindmap.dis,
+        idlist: mindmap.idlist,
+      };
+      localStorage.setItem("manualExport", JSON.stringify(obj));
+    }
   }, []);
   useEffect(() => {
     DFS = [];
     structDFS(mindmap, mindmap.title);
     let list = DFS;
-    let idlist = [];
+    let id = [];
     list.forEach((e) => {
-      idlist.push(e.id);
+      id.push(e.id);
     });
-    setCheckedState(new Array(list.length).fill(true));
-    setDisableState(new Array(list.length).fill(false));
-    setIdCheck(idlist);
+    let checkList = null;
+    let disableList = null;
+    let idList = null;
+    if (localStorage.getItem("manualExport")) {
+      checkList = JSON.parse(localStorage.getItem("manualExport")).check;
+      disableList = JSON.parse(localStorage.getItem("manualExport")).dis;
+      idList = JSON.parse(localStorage.getItem("manualExport")).idlist;
+      if (checkList && disableList && idList) {
+        if (areEqual(id, idList)) {
+          setCheckedState(checkList);
+          setDisableState(disableList);
+        } else {
+          setCheckedState(new Array(list.length).fill(true));
+          setDisableState(new Array(list.length).fill(false));
+        }
+      }
+    } else {
+      setCheckedState(new Array(list.length).fill(true));
+      setDisableState(new Array(list.length).fill(false));
+    }
+
+    setIdCheck(id);
   }, []);
   useEffect(() => {
     onChangeSearchList(refreshSearchList(keyword, mindmap));
@@ -147,6 +184,15 @@ const ManualExport = ({ handleClosePopup }) => {
     setCheckedState(updateArr);
     setDisableState(updateDis);
   };
+
+  useEffect(() => {
+    let obj = { check: checkedState, dis: disableState, idlist: Idcheck };
+    localStorage.setItem("manualExport", JSON.stringify(obj));
+    mindmap.dis = disableState;
+    mindmap.check = checkedState;
+    mindmap.idlist = Idcheck;
+  }, [checkedState, disableState, Idcheck]);
+
   const FillDFS = () => {
     DFS = [];
     structDFS(mindmap, mindmap.text);

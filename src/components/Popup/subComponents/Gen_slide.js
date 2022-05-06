@@ -112,6 +112,6 @@ const gen_powerpoint = (content) => {
   }
   let End = "Thank You";
   nxtSlide.addText(End, rootboxOpts);
-  pres.writeFile({ fileName: rootText + ".pptx" });
+  pres.writeFile({ fileName: localStorage.getItem("title") + ".pptx" });
 };
 export default { gen_powerpoint };
