@@ -183,9 +183,6 @@ const ManualExport = ({ handleClosePopup }) => {
 
   useEffect(() => {
     let obj = { check: checkedState, dis: disableState, idlist: Idcheck };
-    mindmap.dis = disableState;
-    mindmap.check = checkedState;
-    mindmap.idlist = Idcheck;
     let mindmap_json = JSON.parse(localStorage.getItem("mindmap"));
     mindmap_json.idlist = Idcheck;
     mindmap_json.check = checkedState;
