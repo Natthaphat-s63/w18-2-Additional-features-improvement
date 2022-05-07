@@ -118,12 +118,6 @@ const Nav = () => {
   };
 
   const handleDownload = () => {
-    let localstore = localStorage.getItem("manualExport");
-    if (localstore) {
-      mindmap["check"] = JSON.parse(localstore).check;
-      mindmap["dis"] = JSON.parse(localstore).dis;
-      mindmap["idlist"] = JSON.parse(localstore).idlist;
-    }
     const url = `data:text/plain,${encodeURIComponent(
       JSON.stringify(mindmap)
     )}`;

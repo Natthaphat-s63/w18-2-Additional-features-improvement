@@ -159,10 +159,6 @@ const ManualExport = ({ handleClosePopup }) => {
   };
 
   const handleOnChange = (position) => {
-    // const updatedCheckedState = checkedState.map((item, index) =>
-    //   index === position ? !item : item
-    // );
-    // setCheckedState(updatedCheckedState);
     let updateArr = [...checkedState];
     let updateDis = [...disableState];
     let recursiveCount = 0;
@@ -187,10 +183,15 @@ const ManualExport = ({ handleClosePopup }) => {
 
   useEffect(() => {
     let obj = { check: checkedState, dis: disableState, idlist: Idcheck };
-    localStorage.setItem("manualExport", JSON.stringify(obj));
     mindmap.dis = disableState;
     mindmap.check = checkedState;
     mindmap.idlist = Idcheck;
+    let mindmap_json = JSON.parse(localStorage.getItem("mindmap"));
+    mindmap_json.idlist = Idcheck;
+    mindmap_json.check = checkedState;
+    mindmap_json.dis = disableState;
+    localStorage.setItem("manualExport", JSON.stringify(obj));
+    localStorage.setItem("mindmap", JSON.stringify(mindmap_json));
   }, [checkedState, disableState, Idcheck]);
 
   const FillDFS = () => {
